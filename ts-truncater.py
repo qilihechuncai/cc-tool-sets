@@ -2,18 +2,19 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import re
 
 """
 ts-truncater.py is used to truncate ts stream
 """
 
-_DEBUG = False
+_DEBUG = True
 
 def help():
 	s = "USAGE:\tts-truncater -i input file -l header length -o output file\n\n"
 	s += "    input file:        the ts file with private header.\n"
-	s += "    header length:     Default is 42"
-	s += "    output file:       Default is output.ts"
+	s += "    header length:     Default is 42\n"
+	s += "    output file:       Default is output.ts\n"
 
 	sys.stdout.write(s)
 
@@ -26,19 +27,14 @@ def truncate(input_file, length, output_file):
 	fo = open(output_file, "wb+")
 
 	try:
-		while True:
-			tag = fi.read(1)
-			tag = hex(int(ord(tag)))
-			if not tag:
-				break
-			if tag == '0x35':
-				fi.read(41)
-			elif tag == '0x47':
-				fo.write(tag)
-				ts = fi.read(187)
-				if not ts:
-					break
-				fo.write(ts)
+		ts = fi.read()
+		ts = ts.encode('hex')
+
+		pattern = re.compile(r'351301.{78}')
+		ts, count = re.subn(pattern, '', ts)
+		ts = ts.decode('hex')
+		fo.write(ts)
+
 	finally:
 		fi.close()
 		fo.close()
